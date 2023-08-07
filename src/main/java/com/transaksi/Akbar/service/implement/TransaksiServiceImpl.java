@@ -35,8 +35,12 @@ public class TransaksiServiceImpl implements TransaksiService {
 //     private static String yuridan = "nitro5-an515-52-73y8:9001";
 //     private static String charlie = "nitro5-an515-52-73y8:7777";
     // private static String Pegawai = "localhost:6969";
-    private static String charlie = "charlie.serveo.net";
-    private static String yuridan = "yuridan.serveo.net";
+
+//    private static String charlie = "http://charlie.serveo.net";
+//    private static String yuridan = "http://yuridan.serveo.net";
+
+    private static String charlie = "https://charlie-production-655b.up.railway.app";
+    private static String yuridan = "https://yuridan-production.up.railway.app";
     private static final Logger LOGGER = LoggerFactory.getLogger(TransaksiServiceImpl.class);
 
     // informasi API yang digunakan (ubahlah sesuai kebutuhan) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -56,21 +60,21 @@ public class TransaksiServiceImpl implements TransaksiService {
             Integer idPenyewa = transaksiDTO.getIdPenyewa();
 
             // Cek status kendaraan
-            String kendaraanUrl = "http://" + yuridan + "/kendaraan/find/id:" + idKendaraan;
+            String kendaraanUrl =  yuridan + "/kendaraan/find/id:" + idKendaraan;
             KendaraanResponse kendaraanResponse = restTemplate.getForObject(kendaraanUrl, KendaraanResponse.class);
             if (kendaraanResponse == null || !kendaraanResponse.isStatusKetersediaan()) {
                 throw new RuntimeException("Maaf, kendaraan dengan ID " + idKendaraan + " sedang disewa.");
             }
 
             // Cek status sedang sewa
-            String penyewaUrl = "http://" + charlie + "/penyewa/find/" + idPenyewa;
+            String penyewaUrl =  charlie + "/penyewa/find/" + idPenyewa;
             PenyewaResponse penyewaResponse = restTemplate.getForObject(penyewaUrl, PenyewaResponse.class);
             if (penyewaResponse == null || penyewaResponse.isStatusSedangSewa()) {
                 throw new RuntimeException("Penyewa sedang memiliki transaksi aktif.");
             }
 
             // Buat URL dengan parameter idKendaraan
-            String url = "http://" + yuridan + "/kendaraan/find/id:" + idKendaraan;
+            String url =  yuridan + "/kendaraan/find/id:" + idKendaraan;
 
             // Set header Content-Type: application/json
             HttpHeaders headers = new HttpHeaders();
@@ -123,11 +127,11 @@ public class TransaksiServiceImpl implements TransaksiService {
             transaksiRepository.save(transaksiEntity);
 
             // Ubah status kendaraan menjadi tidak tersedia
-            String ubahStatusKendaraanUrl = "http://" + yuridan + "/kendaraan/status/" + idKendaraan + "/false";
+            String ubahStatusKendaraanUrl =  yuridan + "/kendaraan/status/" + idKendaraan + "/false";
             restTemplate.put(ubahStatusKendaraanUrl, null);
 
             // Ubah status sedang sewa menjadi true
-            String ubahStatusSedangSewaUrl = "http://" + charlie + "/penyewa/sedang-sewa/" + idPenyewa + "/true";
+            String ubahStatusSedangSewaUrl =  charlie + "/penyewa/sedang-sewa/" + idPenyewa + "/true";
             restTemplate.put(ubahStatusSedangSewaUrl, null);
 
             // Buat objek PengembalianEntity
@@ -211,11 +215,11 @@ public class TransaksiServiceImpl implements TransaksiService {
                     // Jika statusSewa berubah menjadi "selesai", ubah statusKendaraan menjadi true
                     if ("selesai".equals(newStatusSewa)) {
                         Integer idKendaraan = transaksiEntity.getIdKendaraan();
-                        String ubahStatusKendaraanUrl2 = String.format("http://" + yuridan + "/kendaraan/status/" + idKendaraan + "/true");
+                        String ubahStatusKendaraanUrl2 = String.format( yuridan + "/kendaraan/status/" + idKendaraan + "/true");
                         restTemplate.put(ubahStatusKendaraanUrl2, null);
 
                         Integer idPenyewa = transaksiEntity.getIdPenyewa();
-                        String ubahStatusSedangSewaUrl1 = String.format("http://" + charlie + "/penyewa/sedang-sewa/" + idPenyewa + "/false");
+                        String ubahStatusSedangSewaUrl1 = String.format( charlie + "/penyewa/sedang-sewa/" + idPenyewa + "/false");
                         restTemplate.put(ubahStatusSedangSewaUrl1, null);
                     }
                 }
@@ -331,13 +335,13 @@ public class TransaksiServiceImpl implements TransaksiService {
     }
 
     private KendaraanResponse getKendaraanDetails(Integer idKendaraan, Integer versiKendaraan) {
-        String kendaraanUrl = String.format("http://" + yuridan + "/kendaraan/find-global/id:" + idKendaraan + "/v:" + versiKendaraan);
+        String kendaraanUrl = String.format( yuridan + "/kendaraan/find-global/id:" + idKendaraan + "/v:" + versiKendaraan);
         KendaraanResponse kendaraanResponse = restTemplate.getForObject(kendaraanUrl, KendaraanResponse.class);
         return kendaraanResponse;
     }
 
     private PenyewaResponse getPenyewaDetails(Integer idPenyewa) {
-        String penyewaUrl = String.format("http://" + charlie + "/penyewa/find/" + idPenyewa);
+        String penyewaUrl = String.format( charlie + "/penyewa/find/" + idPenyewa);
         PenyewaResponse penyewaResponse = restTemplate.getForObject(penyewaUrl, PenyewaResponse.class);
         return penyewaResponse;
     }
